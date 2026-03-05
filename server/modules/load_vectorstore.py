@@ -12,7 +12,7 @@ load_dotenv()
 
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 PINECONE_ENV = "us-east-1"
-PINECONE_INDEX_NAME = 'Notes_index'
+PINECONE_INDEX_NAME = 'notesindex'
 
 UPLOAD_DIR = "./uploaded_docs"
 os.makedirs(UPLOAD_DIR,exist_ok=True)
@@ -54,7 +54,7 @@ def load_vectorstore(uploaded_file):
         semantic_splitter = SemanticChunker(
             embeddings,
             breakpoint_threshold_type = "percentile",
-            breakpoint_threshold_amount=95
+            breakpoint_threshold_amount=90
         )
         chunks = semantic_splitter.split_documents(documents)
         all_semantic_chunks.extend(chunks)
