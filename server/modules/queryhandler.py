@@ -1,4 +1,4 @@
-from server.logger import logger
+from logger import logger
 
 def query_chain(chain,user_input:str):
     try:
@@ -12,3 +12,4 @@ def query_chain(chain,user_input:str):
     except Exception as e:
         logger.exception("Error on query chain")
         raise
+    return response

@@ -8,8 +8,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from pinecone import Pinecone
 from pydantic import Field
 from typing import List,Optional
-from server.logger import logger
+from logger import logger
 import os
+from modules.hybrid_search import HybridRetriever
 
 router = APIRouter()
 @router.post("/ask/")
@@ -17,8 +18,8 @@ async def ask_question(question:str = Form(...)):
     try:
         logger.info(f"User query: {question}")
 
-        pc = Pinecone(api_key = os.environ("PINECONE_API_KEY"))
-        index = pc.Index(os.environ("PINECONE_INDEX_NAME"))
+        pc = Pinecone(api_key = os.environ["PINECONE_API_KEY"])
+        index = pc.Index(os.environ["PINECONE_INDEX_NAME"])
         embeddings_model = HuggingFaceEmbeddings(model_name = "all-MiniLM-L6-v2")
         question_vector = embeddings_model.embed_query(question)
         res = index.query(vector = question_vector,top_k = 3,include_metadata = True)
@@ -30,6 +31,8 @@ async def ask_question(question:str = Form(...)):
             )for match in res["matches"]
         ]
 
+        hybridRetriever  = HybridRetriever(documents)
+        keyword_docs = hybridRetriever.keyword_search(question)
         class SimpleRetriever(BaseRetriever):
             tags = Optional[List[str]] = Field(default_factory=list)
             metadata = Optional[dict] = Field(default_factory=dict)
@@ -40,12 +43,13 @@ async def ask_question(question:str = Form(...)):
             def get_relevant_documents(self,query:str) -> List[Document]:
                 return self._documents
             
-            retriever = SimpleRetriever(documents)
-            chain = get_llm_chain(retriever)
-            result = query_chain(chain,question)
+        retriever = SimpleRetriever(documents)
+        all_docs = documens
+        chain = get_llm_chain(retriever)
+        result = query_chain(chain,question)
 
-            logger.info("Query is succesfully")
-            return result
+        logger.info("Query is succesfully")
+        return result
 
 
     except Exception as e:
